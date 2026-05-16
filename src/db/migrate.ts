@@ -1,4 +1,12 @@
 import { runMigrations } from "@kilocode/app-builder-db";
-import { db } from "./index";
+import { getDb } from "./index";
 
-runMigrations(db, {}, { migrationsFolder: "./src/db/migrations" });
+async function main() {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not configured");
+  }
+  await runMigrations(db as any, {}, { migrationsFolder: "./src/db/migrations" });
+}
+
+main();
