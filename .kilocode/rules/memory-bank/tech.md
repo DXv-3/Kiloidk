@@ -26,6 +26,11 @@ bun build          # Production build
 bun start          # Start production server
 bun lint           # Run ESLint
 bun typecheck      # Run TypeScript type checking
+bun test           # Run tests
+bun test:ui        # Run tests with UI
+bun test:coverage  # Run tests with coverage
+bun db:generate    # Generate migrations
+bun db:migrate     # Run migrations (auto in sandbox)
 ```
 
 ## Project Configuration
@@ -57,9 +62,17 @@ bun typecheck      # Run TypeScript type checking
 
 ```json
 {
-  "next": "^16.1.3", // Framework
-  "react": "^19.2.3", // UI library
-  "react-dom": "^19.2.3" // React DOM
+  "next": "^16.1.3",
+  "react": "^19.2.3",
+  "react-dom": "^19.2.3",
+  "zod": "^4.4.3",
+  "clsx": "^2.1.1",
+  "tailwind-merge": "^3.6.0",
+  "react-hook-form": "^7.76.0",
+  "zustand": "^5.0.13",
+  "@tanstack/react-query": "^5.100.10",
+  "drizzle-orm": "^0.45.2",
+  "@kilocode/app-builder-db": "github:Kilo-Org/app-builder-db#main"
 }
 ```
 
@@ -68,13 +81,13 @@ bun typecheck      # Run TypeScript type checking
 ```json
 {
   "typescript": "^5.9.3",
-  "@types/node": "^24.10.2",
-  "@types/react": "^19.2.7",
-  "@types/react-dom": "^19.2.3",
-  "@tailwindcss/postcss": "^4.1.17",
   "tailwindcss": "^4.1.17",
-  "eslint": "^9.39.1",
-  "eslint-config-next": "^16.0.0"
+  "drizzle-kit": "^0.31.10",
+  "vitest": "^4.1.6",
+  "happy-dom": "^20.9.0",
+  "@testing-library/react": "^16.3.2",
+  "@vitest/coverage-v8": "^4.1.6",
+  "@vitejs/plugin-react": "^6.0.2"
 }
 ```
 
@@ -87,16 +100,37 @@ bun typecheck      # Run TypeScript type checking
 ├── bun.lock                # Bun lockfile
 ├── next.config.ts          # Next.js configuration
 ├── tsconfig.json           # TypeScript configuration
+├── vitest.config.ts        # Vitest configuration
+├── drizzle.config.ts       # Drizzle ORM configuration
 ├── postcss.config.mjs      # PostCSS (Tailwind) config
 ├── eslint.config.mjs       # ESLint configuration
-├── public/                 # Static assets
-│   └── .gitkeep
-└── src/                    # Source code
-    └── app/                # Next.js App Router
-        ├── layout.tsx      # Root layout
-        ├── page.tsx        # Home page
-        ├── globals.css     # Global styles
-        └── favicon.ico     # Site icon
+├── src/
+│   ├── app/                # Next.js App Router
+│   │   ├── layout.tsx      # Root layout
+│   │   ├── page.tsx        # Home page
+│   │   ├── loading.tsx     # Loading state
+│   │   ├── error.tsx       # Error boundary
+│   │   ├── not-found.tsx   # 404 page
+│   │   ├── globals.css     # Global styles
+│   │   ├── api/            # API routes
+│   │   │   ├── health/
+│   │   │   ├── users/
+│   │   │   └── posts/
+│   ├── components/         # React components
+│   │   └── ui/             # UI primitives
+│   │       ├── Button.tsx
+│   │       ├── Card.tsx
+│   │       ├── Input.tsx
+│   │       └── LoadingSpinner.tsx
+│   ├── db/                 # Database layer
+│   │   ├── index.ts
+│   │   ├── schema.ts
+│   │   └── migrate.ts
+│   ├── hooks/              # Custom React hooks
+│   ├── stores/             # Zustand stores
+│   ├── providers/          # React context providers
+│   ├── lib/                # Utilities and helpers
+│   └── test/               # Test setup and tests
 ```
 
 ## Technical Constraints
