@@ -1,0 +1,218 @@
+name: healthcare
+description: Healthcare domain for patient management, medical records, and clinical workflows
+version: "1.0.0"
+
+entity_types:
+  - name: Patient
+    description: A patient in the healthcare system
+    category: People
+    properties:
+      first_name: {type: string}
+      last_name: {type: string}
+      date_of_birth: {type: date}
+      gender: {type: string, enum: [male, female, other]}
+      medical_record_number: {type: string}
+      phone: {type: string}
+      email: {type: string}
+
+  - name: Provider
+    description: A healthcare provider (doctor, nurse, therapist)
+    category: People
+    properties:
+      first_name: {type: string}
+      last_name: {type: string}
+      specialty: {type: string}
+      license_number: {type: string}
+      department: {type: string}
+
+  - name: Facility
+    description: A healthcare facility (hospital, clinic, pharmacy)
+    category: Organizations
+    properties:
+      name: {type: string}
+      address: {type: string}
+      phone: {type: string}
+      type: {type: string, enum: [hospital, clinic, pharmacy, lab]}
+
+  - name: Encounter
+    description: A patient-provider interaction
+    category: Events
+    properties:
+      encounter_date: {type: datetime}
+      type: {type: string, enum: [inpatient, outpatient, emergency, telehealth]}
+      status: {type: string, enum: [scheduled, completed, cancelled]}
+      notes: {type: string}
+
+  - name: Medication
+    description: A prescribed medication
+    category: Objects
+    properties:
+      name: {type: string}
+      dosage: {type: string}
+      frequency: {type: string}
+      instructions: {type: string}
+
+  - name: Diagnosis
+    description: A medical diagnosis
+    category: Objects
+    properties:
+      code: {type: string}
+      description: {type: string}
+      diagnosed_date: {type: date}
+      severity: {type: string, enum: [mild, moderate, severe]}
+
+relationships:
+  - name: HAS_ENCOUNTER
+    source: Patient
+    target: Encounter
+    description: Patient has an encounter
+
+  - name: PROVIDED_BY
+    source: Encounter
+    target: Provider
+    description: Encounter was provided by provider
+
+  - name: AT_FACILITY
+    source: Encounter
+    target: Facility
+    description: Encounter occurred at facility
+
+  - name: PRESCRIBED
+    source: Encounter
+    target: Medication
+    description: Medication was prescribed during encounter
+
+  - name: DIAGNOSED_WITH
+    source: Encounter
+    target: Diagnosis
+    description: Diagnosis was made during encounter
+
+document_templates:
+  - name: Patient Summary
+    document_type: summary
+    template: |
+      ## Patient Summary: {{patient_name}}
+      
+      **Date of Birth:** {{dob}}
+      **MRN:** {{mrn}}
+      
+      ### Recent Encounters
+      {% for encounter in encounters %}
+      - {{encounter.date}}: {{encounter.type}} with {{encounter.provider}}
+      {% endfor %}
+    variables: [patient_name, dob, mrn, encounters]
+
+  - name: Clinical Note
+    document_type: note
+    template: |
+      ## Clinical Note
+      
+      **Patient:** {{patient_name}}
+      **Date:** {{date}}
+      **Provider:** {{provider_name}}
+      
+      ### Subjective
+      {{subjective}}
+      
+      ### Objective
+      {{objective}}
+      
+      ### Assessment
+      {{assessment}}
+      
+      ### Plan
+      {{plan}}
+    variables: [patient_name, date, provider_name, subjective, objective, assessment, plan]
+
+  - name: Discharge Summary
+    document_type: summary
+    template: |
+      ## Discharge Summary
+      
+      **Patient:** {{patient_name}}
+      **Admission Date:** {{admission_date}}
+      **Discharge Date:** {{discharge_date}}
+      **Attending:** {{attending}}
+      
+      ### Discharge Diagnosis
+      {{discharge_diagnosis}}
+      
+      ### Discharge Medications
+      {% for med in medications %}
+      - {{med.name}} {{med.dosage}}
+      {% endfor %}
+    variables: [patient_name, admission_date, discharge_date, attending, discharge_diagnosis, medications]
+
+decision_trace_scenarios:
+  - name: Emergency Triage
+    description: Determine priority for incoming patient
+    steps:
+      - Assess vital signs
+      - Check chief complaint
+      - Assign acuity level
+      - Route to appropriate provider
+
+  - name: Medication Reconciliation
+    description: Review patient medications at admission
+    steps:
+      - List current medications
+      - Check for interactions
+      - Verify dosing accuracy
+      - Update medication list
+
+  - name: Discharge Planning
+    description: Prepare for patient discharge
+    steps:
+      - Review discharge diagnosis
+      - Plan follow-up care
+      - Prescribe discharge medications
+      - Schedule follow-up appointments
+
+agent_tools:
+  - name: search_patients
+    description: Search for patients by name or MRN
+    parameters:
+      query: {type: string, required: true}
+    cypher_template: |
+      MATCH (p:Patient)
+      WHERE p.first_name CONTAINS $query OR p.last_name CONTAINS $query OR p.medical_record_number CONTAINS $query
+      RETURN p LIMIT 10
+
+  - name: get_patient_encounters
+    description: Get encounters for a patient
+    parameters:
+      patient_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (p:Patient {id: $patient_id})-[:HAS_ENCOUNTER]->(e:Encounter)
+      RETURN e ORDER BY e.encounter_date DESC
+
+  - name: get_encounter_details
+    description: Get details for a specific encounter
+    parameters:
+      encounter_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (e:Encounter {id: $encounter_id})
+      OPTIONAL MATCH (e)-[:PRESCRIBED]->(m:Medication)
+      OPTIONAL MATCH (e)-[:DIAGNOSED_WITH]->(d:Diagnosis)
+      RETURN e, collect(m) as medications, collect(d) as diagnoses
+
+system_prompt: |
+  You are a healthcare assistant AI designed to help with patient management and clinical workflows.
+  You have access to patient records, encounter history, medications, and diagnoses.
+  Always maintain patient privacy and follow HIPAA guidelines.
+  When searching for patients, use exact matching when possible.
+  Provide clear, actionable information for healthcare providers.
+
+visualization_config:
+  node_colors:
+    Patient: "#4CAF50"
+    Provider: "#2196F3"
+    Facility: "#FF9800"
+    Encounter: "#9C27B0"
+    Medication: "#F44336"
+    Diagnosis: "#795548"
+  edge_styles:
+    HAS_ENCOUNTER: {color: "#4CAF50", width: 2}
+    PROVIDED_BY: {color: "#2196F3", width: 1}
+  layout: force-directed
+  font: "Inter"

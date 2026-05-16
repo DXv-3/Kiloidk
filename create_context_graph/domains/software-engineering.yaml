@@ -1,0 +1,193 @@
+name: software-engineering
+description: Software engineering domain for code repositories, projects, and development workflows
+version: "1.0.0"
+
+entity_types:
+  - name: Developer
+    description: A software developer
+    category: People
+    properties:
+      name: {type: string}
+      email: {type: string}
+      github_username: {type: string}
+      primary_language: {type: string}
+
+  - name: Repository
+    description: A code repository
+    category: Objects
+    properties:
+      name: {type: string}
+      url: {type: string}
+      language: {type: string}
+      stars: {type: integer}
+      forks: {type: integer}
+
+  - name: Project
+    description: A software project
+    category: Objects
+    properties:
+      name: {type: string}
+      description: {type: string}
+      start_date: {type: date}
+      status: {type: string, enum: [planning, active, maintenance, archived]}
+
+  - name: Issue
+    description: A bug or feature request
+    category: Objects
+    properties:
+      title: {type: string}
+      description: {type: string}
+      status: {type: string, enum: [open, in_progress, closed]}
+      priority: {type: string, enum: [low, medium, high, critical]}
+      assignee: {type: string}
+
+  - name: PullRequest
+    description: A pull request
+    category: Objects
+    properties:
+      title: {type: string}
+      description: {type: string}
+      status: {type: string, enum: [open, merged, closed]}
+      author: {type: string}
+      created_at: {type: datetime}
+
+relationships:
+  - name: CONTRIBUTED_TO
+    source: Developer
+    target: Repository
+    description: Developer contributed to repository
+
+  - name: WORKS_ON
+    source: Developer
+    target: Project
+    description: Developer works on project
+
+  - name: HAS_ISSUE
+    source: Project
+    target: Issue
+    description: Project has an issue
+
+  - name: RELATES_TO_PR
+    source: Issue
+    target: PullRequest
+    description: Issue relates to pull request
+
+  - name: CONTAINS_REPO
+    source: Project
+    target: Repository
+    description: Project contains repository
+
+document_templates:
+  - name: Project README
+    document_type: specification
+    template: |
+      # {{project_name}}
+      
+      ## Description
+      {{description}}
+      
+      ## Getting Started
+      {{getting_started}}
+      
+      ## Contributors
+      {% for contributor in contributors %}
+      - {{contributor.name}} ({{contributor.role}})
+      {% endfor %}
+    variables: [project_name, description, getting_started, contributors]
+
+  - name: API Documentation
+    document_type: specification
+    template: |
+      # API Documentation
+      
+      ## Endpoints
+      
+      ### GET /{{endpoint}}
+      
+      **Description:** {{description}}
+      
+      **Parameters:**
+      {% for param in parameters %}
+      - {{param.name}} ({{param.type}}): {{param.description}}
+      {% endfor %}
+      
+      **Response:**
+      ```json
+      {{response_example}}
+      ```
+    variables: [endpoint, description, parameters, response_example]
+
+  - name: Sprint Retrospective
+    document_type: report
+    template: |
+      # Sprint Retrospective - {{sprint_number}}
+      
+      **Date:** {{date}}
+      **Team:** {{team_name}}
+      
+      ## What Went Well
+      {% for item in went_well %}
+      - {{item}}
+      {% endfor %}
+      
+      ## What Needs Improvement
+      {% for item in needs_improvement %}
+      - {{item}}
+      {% endfor %}
+      
+      ## Action Items
+      {% for item in action_items %}
+      - [ ] {{item}}
+      {% endfor %}
+    variables: [sprint_number, date, team_name, went_well, needs_improvement, action_items]
+
+decision_trace_scenarios:
+  - name: Code Review Approval
+    description: Determine if PR is ready to merge
+    steps:
+      - Check test coverage
+      - Review code style
+      - Verify documentation
+      - Approve or request changes
+
+  - name: Sprint Planning
+    description: Select issues for sprint
+    steps:
+      - Review backlog
+      - Estimate effort
+      - Consider dependencies
+      - Assign to sprint
+
+agent_tools:
+  - name: search_repositories
+    description: Search repositories by name or language
+    parameters:
+      query: {type: string, required: true}
+    cypher_template: |
+      MATCH (r:Repository)
+      WHERE r.name CONTAINS $query OR r.language CONTAINS $query
+      RETURN r LIMIT 10
+
+  - name: get_project_issues
+    description: Get issues for a project
+    parameters:
+      project_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (p:Project {id: $project_id})-[:HAS_ISSUE]->(i:Issue)
+      RETURN i ORDER BY i.priority DESC, i.created_at DESC
+
+system_prompt: |
+  You are a software engineering assistant AI designed to help with code repositories, projects, and development workflows.
+  You can search repositories, track issues, and help with project planning.
+  Always provide technical context and code examples when relevant.
+  Follow best practices for security and code quality.
+
+visualization_config:
+  node_colors:
+    Developer: "#4CAF50"
+    Repository: "#2196F3"
+    Project: "#FF9800"
+    Issue: "#F44336"
+    PullRequest: "#9C27B0"
+  layout: force-directed
+  font: "Fira Code"

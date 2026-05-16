@@ -1,0 +1,73 @@
+name: marketing
+description: Marketing domain for campaigns, leads, and customer engagement
+version: "1.0.0"
+
+entity_types:
+  - name: Campaign
+    description: A marketing campaign
+    category: Objects
+    properties:
+      name: {type: string}
+      channel: {type: string}
+      budget: {type: number}
+      start_date: {type: date}
+      end_date: {type: date}
+
+  - name: Lead
+    description: A potential customer lead
+    category: People
+    properties:
+      name: {type: string}
+      email: {type: string}
+      source: {type: string}
+      score: {type: integer}
+
+  - name: Customer
+    description: A customer
+    category: People
+    properties:
+      name: {type: string}
+      email: {type: string}
+      lifetime_value: {type: number}
+
+relationships:
+  - name: GENERATED_LEAD
+    source: Campaign
+    target: Lead
+
+  - name: CONVERTED_TO_CUSTOMER
+    source: Lead
+    target: Customer
+
+document_templates:
+  - name: Campaign Report
+    document_type: report
+    template: |
+      # Campaign Report: {{campaign_name}}
+      
+      **Channel:** {{channel}}
+      **Budget:** {{budget}}
+      **Results:** {{results}}
+    variables: [campaign_name, channel, budget, results]
+
+agent_tools:
+  - name: get_campaign_performance
+    description: Get campaign performance metrics
+    parameters:
+      campaign_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (c:Campaign {id: $campaign_id})
+      OPTIONAL MATCH (c)-[:GENERATED_LEAD]->(l:Lead)
+      RETURN c, count(l) as lead_count
+
+system_prompt: |
+  You are a marketing assistant AI for campaign management.
+  Help analyze campaign performance and lead generation.
+  Maintain GDPR compliance for customer data.
+
+visualization_config:
+  node_colors:
+    Campaign: "#4CAF50"
+    Lead: "#2196F3"
+    Customer: "#FF9800"
+  layout: force-directed

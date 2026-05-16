@@ -1,0 +1,70 @@
+name: legal
+description: Legal domain for case management, clients, and court proceedings
+version: "1.0.0"
+
+entity_types:
+  - name: Client
+    description: A legal client
+    category: People
+    properties:
+      name: {type: string}
+      case_number: {type: string}
+      contact: {type: string}
+
+  - name: Case
+    description: A legal case
+    category: Objects
+    properties:
+      case_number: {type: string}
+      title: {type: string}
+      status: {type: string, enum: [open, pending, closed, appealed]}
+      court: {type: string}
+
+  - name: Attorney
+    description: A legal attorney
+    category: People
+    properties:
+      name: {type: string}
+      bar_number: {type: string}
+      specialization: {type: string}
+
+relationships:
+  - name: REPRESENTS
+    source: Attorney
+    target: Client
+
+  - name: HAS_CASE
+    source: Client
+    target: Case
+
+document_templates:
+  - name: Case Summary
+    document_type: summary
+    template: |
+      # Case Summary: {{case_title}}
+      
+      **Case Number:** {{case_number}}
+      **Status:** {{status}}
+      **Court:** {{court}}
+    variables: [case_title, case_number, status, court]
+
+agent_tools:
+  - name: get_cases_by_client
+    description: Get cases for a client
+    parameters:
+      client_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (c:Client {id: $client_id})-[:HAS_CASE]->(case:Case)
+      RETURN case
+
+system_prompt: |
+  You are a legal assistant AI for case management.
+  Maintain strict confidentiality of all client information.
+  Follow attorney-client privilege guidelines.
+
+visualization_config:
+  node_colors:
+    Client: "#4CAF50"
+    Case: "#2196F3"
+    Attorney: "#FF9800"
+  layout: force-directed

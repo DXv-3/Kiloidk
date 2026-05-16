@@ -1,0 +1,21 @@
+[project]
+name = "create-context-graph"
+version = "0.1.0"
+description = "CLI scaffolding tool for full-stack AI agent applications backed by Neo4j"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "click>=8.0",
+    "questionary>=2.0",
+    "rich>=13.0",
+    "jinja2>=3.0",
+    "pyyaml>=6.0",
+    "neo4j>=5.0",
+]
+
+[project.scripts]
+create-context-graph = "create_context_graph.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

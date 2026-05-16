@@ -1,0 +1,89 @@
+name: education
+description: Education domain for courses, students, and academic workflows
+version: "1.0.0"
+
+entity_types:
+  - name: Student
+    description: A student
+    category: People
+    properties:
+      student_id: {type: string}
+      first_name: {type: string}
+      last_name: {type: string}
+      email: {type: string}
+      enrollment_date: {type: date}
+
+  - name: Course
+    description: An academic course
+    category: Objects
+    properties:
+      course_code: {type: string}
+      title: {type: string}
+      credits: {type: integer}
+      semester: {type: string}
+
+  - name: Assignment
+    description: A course assignment
+    category: Objects
+    properties:
+      title: {type: string}
+      due_date: {type: datetime}
+      max_points: {type: integer}
+      status: {type: string, enum: [assigned, submitted, graded]}
+
+  - name: Instructor
+    description: A course instructor
+    category: People
+    properties:
+      name: {type: string}
+      email: {type: string}
+      department: {type: string}
+
+relationships:
+  - name: ENROLLED_IN
+    source: Student
+    target: Course
+
+  - name: TEACHES
+    source: Instructor
+    target: Course
+
+  - name: SUBMITTED
+    source: Student
+    target: Assignment
+
+document_templates:
+  - name: Grade Report
+    document_type: report
+    template: |
+      # Grade Report - {{student_name}}
+      
+      {% for course in courses %}
+      ## {{course.code}}: {{course.name}}
+      {% for assignment in course.assignments %}
+      - {{assignment.name}}: {{assignment.grade}}/{{assignment.max_points}}
+      {% endfor %}
+      {% endfor %}
+    variables: [student_name, courses]
+
+agent_tools:
+  - name: get_student_grades
+    description: Get grades for a student
+    parameters:
+      student_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (s:Student {id: $student_id})-[:ENROLLED_IN]->(c:Course)
+      RETURN c
+
+system_prompt: |
+  You are an education assistant AI for academic workflows.
+  Help students track assignments and grades.
+  Follow FERPA guidelines for student privacy.
+
+visualization_config:
+  node_colors:
+    Student: "#4CAF50"
+    Course: "#2196F3"
+    Assignment: "#FF9800"
+    Instructor: "#9C27B0"
+  layout: force-directed

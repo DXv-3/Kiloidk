@@ -1,0 +1,110 @@
+name: finance
+description: Finance domain for accounting, investments, and financial analysis
+version: "1.0.0"
+
+entity_types:
+  - name: Account
+    description: A financial account
+    category: Objects
+    properties:
+      account_number: {type: string}
+      account_type: {type: string, enum: [checking, savings, credit, investment]}
+      balance: {type: number}
+      currency: {type: string, default: USD}
+
+  - name: Transaction
+    description: A financial transaction
+    category: Events
+    properties:
+      amount: {type: number}
+      date: {type: datetime}
+      description: {type: string}
+      category: {type: string}
+
+  - name: Portfolio
+    description: An investment portfolio
+    category: Objects
+    properties:
+      name: {type: string}
+      total_value: {type: number}
+      risk_level: {type: string, enum: [low, medium, high]}
+
+relationships:
+  - name: HAS_TRANSACTION
+    source: Account
+    target: Transaction
+
+  - name: OWNS_PORTFOLIO
+    source: Account
+    target: Portfolio
+
+document_templates:
+  - name: Financial Report
+    document_type: report
+    template: |
+      # Financial Report - {{period}}
+      
+      ## Summary
+      Total Balance: {{total_balance}}
+      {% for account in accounts %}
+      - {{account.name}}: {{account.balance}}
+      {% endfor %}
+    variables: [period, total_balance, accounts]
+
+  - name: Transaction Statement
+    document_type: statement
+    template: |
+      # Transaction Statement
+      
+      **Account:** {{account_number}}
+      **Period:** {{start_date}} to {{end_date}}
+      
+      {% for transaction in transactions %}
+      - {{transaction.date}}: {{transaction.description}} ({{transaction.amount}})
+      {% endfor %}
+    variables: [account_number, start_date, end_date, transactions]
+
+  - name: Budget Plan
+    document_type: plan
+    template: |
+      # Budget Plan - {{month}}
+      
+      ## Income
+      {% for source in income_sources %}
+      - {{source.name}}: {{source.amount}}
+      {% endfor %}
+      
+      ## Expenses
+      {% for expense in expenses %}
+      - {{expense.category}}: {{expense.amount}}
+      {% endfor %}
+    variables: [month, income_sources, expenses]
+
+decision_trace_scenarios:
+  - name: Investment Allocation
+    description: Determine optimal investment allocation
+    steps:
+      - Assess risk tolerance
+      - Review current portfolio
+      - Recommend allocation
+
+agent_tools:
+  - name: get_account_transactions
+    description: Get transactions for an account
+    parameters:
+      account_id: {type: string, required: true}
+    cypher_template: |
+      MATCH (a:Account {id: $account_id})-[:HAS_TRANSACTION]->(t:Transaction)
+      RETURN t ORDER BY t.date DESC
+
+system_prompt: |
+  You are a finance assistant AI for accounting and investment analysis.
+  Help users understand their financial data and make informed decisions.
+  Always emphasize security and compliance with financial regulations.
+
+visualization_config:
+  node_colors:
+    Account: "#4CAF50"
+    Transaction: "#2196F3"
+    Portfolio: "#FF9800"
+  layout: force-directed

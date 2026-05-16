@@ -1,0 +1,73 @@
+name: sales
+description: Sales domain for leads, opportunities, and deal pipeline
+version: "1.0.0"
+
+entity_types:
+  - name: Opportunity
+    description: A sales opportunity
+    category: Objects
+    properties:
+      name: {type: string}
+      value: {type: number}
+      stage: {type: string, enum: [prospecting, qualified, proposal, negotiation, closed_won, closed_lost]}
+      probability: {type: integer}
+
+  - name: Lead
+    description: A sales lead
+    category: People
+    properties:
+      name: {type: string}
+      company: {type: string}
+      email: {type: string}
+      source: {type: string}
+
+  - name: Account
+    description: A customer account
+    category: Organizations
+    properties:
+      name: {type: string}
+      industry: {type: string}
+      size: {type: string}
+
+relationships:
+  - name: ASSIGNED_TO
+    source: Opportunity
+    target: Account
+
+  - name: QUALIFIED_FROM
+    source: Opportunity
+    target: Lead
+
+document_templates:
+  - name: Sales Pipeline Report
+    document_type: report
+    template: |
+      # Sales Pipeline Report
+      
+      {% for stage in stages %}
+      ## {{stage.name}} ({{stage.count}} deals)
+      Total Value: {{stage.total_value}}
+      {% endfor %}
+    variables: [stages]
+
+agent_tools:
+  - name: get_opportunities
+    description: Get opportunities by stage
+    parameters:
+      stage: {type: string, required: false}
+    cypher_template: |
+      MATCH (o:Opportunity)
+      WHERE $stage IS NULL OR o.stage = $stage
+      RETURN o ORDER BY o.value DESC
+
+system_prompt: |
+  You are a sales assistant AI for pipeline management.
+  Help track opportunities and forecast revenue.
+  Follow CRM best practices.
+
+visualization_config:
+  node_colors:
+    Opportunity: "#4CAF50"
+    Lead: "#2196F3"
+    Account: "#FF9800"
+  layout: force-directed

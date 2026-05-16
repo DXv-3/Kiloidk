@@ -1,0 +1,15 @@
+{
+  "name": "create-context-graph",
+  "version": "0.1.0",
+  "description": "CLI scaffolding tool for full-stack AI agent applications backed by Neo4j",
+  "bin": {
+    "create-context-graph": "./bin/create-context-graph.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
